@@ -1,0 +1,241 @@
+# sf.yaml - Super Flutter CLI configuration.
+# This file is the source of truth for the project's Flutter architecture.
+# Documentation: docs/configuration.md
+version: 1
+project:
+  name: super_flutter
+  organization: tech.sumato
+  type: flutter
+architecture:
+  name: sumato_standard
+  version: 1
+paths:
+  lib: lib
+  feature_roots:
+    data: lib/data
+    domain: lib/domain
+    presentation: lib/features
+  core: lib/core
+  app: lib/app
+  test: test
+  extra:
+    di: lib/core/di
+    network: lib/core/network
+    router: lib/app/router
+    ui: lib/core/ui
+components:
+  bloc:
+    scope: feature
+    root: presentation
+    dir: presentation/{name}/bloc
+    file_case: snake_case
+    class_case: pascal_case
+    file_suffix: _bloc
+    class_suffix: Bloc
+    template: bloc
+    description: Bloc for one screen
+    variants:
+      default: current
+      options:
+        - name: current
+          description: Bloc owned by the current screen
+        - name: global
+          description: Bloc provided globally by the application
+        - name: skip
+          description: Do not generate a bloc
+          generates: false
+  entity:
+    scope: feature
+    root: domain
+    dir: entities
+    file_case: snake_case
+    class_case: pascal_case
+    template: entity
+    description: Immutable domain entity (extends Equatable)
+  event:
+    scope: feature
+    root: presentation
+    dir: presentation/{name}/bloc
+    file_case: snake_case
+    class_case: pascal_case
+    file_suffix: _event
+    class_suffix: Event
+    template: event
+    description: Bloc event base class
+  local_data_source:
+    scope: feature
+    root: data
+    dir: sources/local
+    file_case: snake_case
+    class_case: pascal_case
+    file_suffix: _local_data_source
+    class_suffix: LocalDataSource
+    template: local_data_source
+    description: Local (cache/database) data source
+  model:
+    scope: feature
+    root: data
+    dir: model
+    file_case: snake_case
+    class_case: pascal_case
+    file_suffix: _model
+    class_suffix: Model
+    template: model
+    description: JSON-serializable data model
+  remote_data_source:
+    scope: feature
+    root: data
+    dir: sources/remote
+    file_case: snake_case
+    class_case: pascal_case
+    file_suffix: _remote_data_source
+    class_suffix: RemoteDataSource
+    template: remote_data_source
+    description: Remote (API) data source
+  repository:
+    scope: feature
+    root: domain
+    dir: repositories
+    file_case: snake_case
+    class_case: pascal_case
+    file_suffix: _repository
+    class_suffix: Repository
+    template: repository
+    description: Repository contract (abstract interface class)
+  repository_impl:
+    scope: feature
+    root: data
+    dir: repositories
+    file_case: snake_case
+    class_case: pascal_case
+    file_suffix: _repository_impl
+    class_suffix: RepositoryImpl
+    template: repository_impl
+    description: Repository implementation
+  route_names:
+    scope: feature
+    root: presentation
+    dir: routes
+    file_case: snake_case
+    class_case: pascal_case
+    file_suffix: _route_names
+    class_suffix: RouteNames
+    template: route_names
+    description: Route name constants for the feature
+  routes:
+    scope: feature
+    root: presentation
+    dir: routes
+    file_case: snake_case
+    class_case: pascal_case
+    file_suffix: _routes
+    class_suffix: Routes
+    template: routes
+    description: The feature's go_router routes
+  screen:
+    scope: feature
+    root: presentation
+    dir: presentation/{name}/screen
+    file_case: snake_case
+    class_case: pascal_case
+    file_suffix: _screen
+    class_suffix: Screen
+    template: screen
+    description: Screen widget
+    variants:
+      default: stateless
+      options:
+        - name: stateless
+          description: rebuilds from its inputs; holds nothing
+        - name: stateful
+          description: owns a State object - controllers, keys, animations
+  session_cubit:
+    scope: feature
+    root: presentation
+    dir: session/bloc
+    file_case: snake_case
+    class_case: pascal_case
+    file_suffix: _cubit
+    class_suffix: Cubit
+    template: cubit
+    description: Feature-wide cubit (session state)
+  session_state:
+    scope: feature
+    root: presentation
+    dir: session/bloc
+    file_case: snake_case
+    class_case: pascal_case
+    file_suffix: _state
+    class_suffix: State
+    template: state
+    description: State class for a feature-wide cubit
+  state:
+    scope: feature
+    root: presentation
+    dir: presentation/{name}/bloc
+    file_case: snake_case
+    class_case: pascal_case
+    file_suffix: _state
+    class_suffix: State
+    template: state
+    description: Bloc state class
+  use_case:
+    scope: feature
+    root: domain
+    dir: use_cases
+    file_case: snake_case
+    class_case: pascal_case
+    template: use_case
+    description: Single-purpose domain use case
+  widget:
+    scope: global
+    dir: lib/core/ui/widgets
+    file_case: snake_case
+    class_case: pascal_case
+    template: widget
+    description: Shared UI widget
+feature:
+  components:
+    - event
+    - state
+    - bloc
+    - screen
+    - route_names
+    - routes
+  optional:
+    data:
+      kinds:
+        - remote_data_source
+        - local_data_source
+        - repository_impl
+    domain:
+      kinds:
+        - repository
+    session:
+      kinds:
+        - session_cubit
+        - session_state
+  register:
+    - file: lib/app/router/app_router.dart
+      component: routes
+      imports: sf:feature-routes-imports
+      entries: sf:feature-routes
+      entry: '...build{{ .ClassName }}(),'
+    - file: lib/app/app.dart
+      component: bloc
+      imports: sf:app-bloc-imports
+      entries: sf:app-blocs
+      entry: 'BlocProvider(create: (_) => {{ .ClassName }}()),'
+      when: bloc=global
+generation:
+  format: true
+  analyze: false
+  model:
+    serialization: manual
+    equatable: false
+    nullable: all
+    documentation: true
+    reuse_existing: true
+    skip_null_fields: true
+metadata:
+  dir: .sf
